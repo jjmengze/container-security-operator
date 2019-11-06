@@ -19,7 +19,8 @@ func generateContainerStatus(name, image, imageID string) v1.ContainerStatus {
 }
 
 var imageTable = []struct {
-	imageID string
+	imageID     string
+	throwsError bool
 
 	expectedHost       string
 	expectedNamespace  string
@@ -28,6 +29,7 @@ var imageTable = []struct {
 }{
 	{
 		"docker-pullable://quay.io/quay/redis@sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
+		false,
 		"quay.io",
 		"quay",
 		"redis",
@@ -35,6 +37,7 @@ var imageTable = []struct {
 	},
 	{
 		"docker-pullable://nginx@sha256:0d71ff22db29a08ac7399d1b35b0311c5b0cbe68d878993718275758811f652a",
+		false,
 		"docker.io",
 		"library",
 		"nginx",
@@ -42,6 +45,7 @@ var imageTable = []struct {
 	},
 	{
 		"docker-pullable://quay/redis@sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
+		false,
 		"docker.io",
 		"quay",
 		"redis",
@@ -49,6 +53,7 @@ var imageTable = []struct {
 	},
 	{
 		"docker-pullable://quay/redis--test@sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
+		false,
 		"docker.io",
 		"quay",
 		"redis--test",
@@ -56,17 +61,11 @@ var imageTable = []struct {
 	},
 	{
 		"quay/redis--test@sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
+		true,
 		"docker.io",
 		"quay",
 		"redis--test",
 		"sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
-	},
-	{
-		"docker-pullable://quay.io/alecmerdler/bbb@sha256:24c6258b99cd427d0c3003e2878159de269f96c4ffbdeceaf9373ea3a31866b3",
-		"quay.io",
-		"alecmerdler",
-		"bbb",
-		"sha256:24c6258b99cd427d0c3003e2878159de269f96c4ffbdeceaf9373ea3a31866b3",
 	},
 }
 
@@ -79,7 +78,9 @@ func TestParseImageID(t *testing.T) {
 			Digest:     tt.expectedDigest,
 		}
 		parsedImageID, err := ParseImageID(tt.imageID)
-		if !reflect.DeepEqual(image, parsedImageID) {
+		if tt.throwsError {
+			assert.Error(t, err)
+		} else if !reflect.DeepEqual(image, parsedImageID) {
 			t.Errorf("Incorrectly parsed %s as %+v: %s", tt.imageID, parsedImageID, err)
 		}
 	}
@@ -147,18 +148,6 @@ var containerStatusTable = []struct {
 		"sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
 		"latest",
 	},
-	{
-		"bbb",
-		"quay.io/alecmerdler/bbb:scrape",
-		"docker-pullable://quay.io/alecmerdler/bbb@sha256:24c6258b99cd427d0c3003e2878159de269f96c4ffbdeceaf9373ea3a31866b3",
-
-		"bbb",
-		"quay.io",
-		"alecmerdler",
-		"bbb",
-		"sha256:24c6258b99cd427d0c3003e2878159de269f96c4ffbdeceaf9373ea3a31866b3",
-		"scrape",
-	},
 }
 
 func TestParseContainerStatus(t *testing.T) {
@@ -207,16 +196,6 @@ var imageIDTable = []struct {
 		imageID:        "docker-pullable://quay/redis--test@sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
 		tag:            "testTag",
 		expectedString: "quay/redis--test:testTag",
-	},
-	{
-		imageID:        "quay.io/quay/redis@sha256:94033a42da840b970fd9d2b04dae5fec56add2714ca674a758d030ce5acba27e",
-		tag:            "testTag",
-		expectedString: "quay.io/quay/redis:testTag",
-	},
-	{
-		imageID:        "docker-pullable://quay.io/alecmerdler/bbb@sha256:24c6258b99cd427d0c3003e2878159de269f96c4ffbdeceaf9373ea3a31866b3",
-		tag:            "scrape",
-		expectedString: "quay.io/alecmerdler/bbb:scrape",
 	},
 }
 

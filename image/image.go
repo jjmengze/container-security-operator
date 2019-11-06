@@ -79,6 +79,10 @@ type Image struct {
 	Auth          string
 }
 
+func (img *Image) HostURL() string {
+	return "https://" + img.Host
+}
+
 // Return the image manifest id (docker-pullable)
 // See https://github.com/kubernetes/kubernetes/pull/34473
 func (img *Image) URL(subpaths ...string) string {
@@ -126,17 +130,13 @@ func ParseImageID(imageID string) (*Image, error) {
 
 	// https://github.com/kubernetes/kubernetes/issues/46255
 	imageIDTokens := strings.SplitN(imageID, "://", 2)
-	if len(imageIDTokens) > 2 {
-		return nil, fmt.Errorf("Invalid imageID format")
+	if len(imageIDTokens) != 2 {
+		return nil, fmt.Errorf("Invalid ImageID: digest is not pullable")
 	}
-	if len(imageIDTokens) == 2 {
-		if imageIDTokens[0] != "docker-pullable" {
-			return nil, fmt.Errorf("Image not using manifest digest format")
-		}
-		img = imageIDTokens[1]
-	} else {
-		img = imageIDTokens[0]
+	if imageIDTokens[0] != "docker-pullable" {
+		return nil, fmt.Errorf("Invalid ImageID: digest is not pullable")
 	}
+	img = imageIDTokens[1]
 
 	i := strings.IndexRune(img, '/')
 	if i == -1 {
