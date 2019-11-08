@@ -5,15 +5,15 @@ all: install
 
 .PHONY: build
 build:
-	go build -v -o bin/security-labeller ./cmd/security-labeller
+	go build -v -o bin/container-security-operator ./cmd/container-security-operator
 
 .PHONY: run
 run: build
-	./bin/security-labeller -kubeconfig ~/.kube/config  -config example-config.yaml
+	./bin/container-security-operator -kubeconfig ~/.kube/config -config example-config.yaml
 
 .PHONY: installcrds
 installcrds:
-	kubectl create -f deploy/imagemanifestvuln.yaml
+	kubectl create -f deploy/imagemanifestvuln.crd.yaml
 
 .PHONY: devenv
 devenv: installcrds
